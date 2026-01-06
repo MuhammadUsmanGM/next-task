@@ -24,8 +24,28 @@ const initialTasks = [
 export default function DashboardOverview() {
   const { data: session } = authClient.useSession();
   const user = session?.user;
-  const [tasks, setTasks] = React.useState(initialTasks);
+  const [tasks, setTasks] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch("/api/tasks");
+      const data = await res.json();
+      if (Array.isArray(data)) setTasks(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTasks();
+    const handleRefresh = () => fetchTasks();
+    window.addEventListener('taskAdded', handleRefresh);
+    return () => window.removeEventListener('taskAdded', handleRefresh);
+  }, []);
 
   const completedCount = tasks.filter(t => t.status === "Completed").length;
   const inProgressCount = tasks.filter(t => t.status === "In Progress").length;
@@ -38,17 +58,21 @@ export default function DashboardOverview() {
     { label: "Completed", value: String(completedCount).padStart(2, "0"), change: "+15%", icon: Check, color: "text-green-500", bg: "bg-green-500/10" },
   ];
 
-  const handleCreateTask = (newTask: any) => {
-    setTasks([{ id: Date.now(), ...newTask, due: newTask.dueDate, status: "Pending" }, ...tasks]);
+  const handleCreateTask = async (newTask: any) => {
+    // Optimization: we could call the API here directly
+    await fetch("/api/tasks/ai-create", {
+        method: "POST",
+        body: JSON.stringify(newTask),
+    });
+    fetchTasks();
   };
 
-  const toggleTaskStatus = (id: number) => {
-    setTasks(tasks.map(t => {
-      if (t.id === id) {
-        return { ...t, status: t.status === "Completed" ? "Pending" : "Completed" };
-      }
-      return t;
-    }));
+  const toggleTaskStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === "Completed" ? "Pending" : "Completed";
+    // Optimistic update
+    setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus } : t));
+    
+    // In a full implementation, we'd have a PATCH route. For now, we'll keep it simple.
   };
 
   return (
@@ -134,12 +158,12 @@ export default function DashboardOverview() {
                       >
                         <td className="px-6 py-4 text-center">
                           <button 
-                            onClick={() => toggleTaskStatus(task.id)}
-                            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors mx-auto ${
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
                               task.status === "Completed" ? "bg-primary border-primary" : "border-card-border hover:border-primary"
                             }`}
+                            onClick={() => toggleTaskStatus(task.id, task.status)}
                           >
-                            {task.status === "Completed" && <Check className="w-3.5 h-3.5 text-white" />}
+                            {task.status === "Completed" && <Check className="w-4 h-4 text-white" />}
                           </button>
                         </td>
                         <td className="px-6 py-4">

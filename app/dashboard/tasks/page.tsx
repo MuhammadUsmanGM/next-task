@@ -34,26 +34,46 @@ const initialTasks: Task[] = [
 ];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch("/api/tasks");
+      const data = await res.json();
+      if (Array.isArray(data)) setTasks(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchTasks();
+    const handleRefresh = () => fetchTasks();
+    window.addEventListener('taskAdded', handleRefresh);
+    return () => window.removeEventListener('taskAdded', handleRefresh);
+  }, []);
 
   const filteredTasks = tasks.filter(task => {
     if (filter === "All") return true;
     return task.status === filter;
   });
 
-  const handleCreateTask = (newTask: any) => {
-    setTasks([{ id: Date.now(), ...newTask, status: "Pending" }, ...tasks]);
+  const handleCreateTask = async (newTask: any) => {
+    await fetch("/api/tasks/ai-create", {
+        method: "POST",
+        body: JSON.stringify(newTask),
+    });
+    fetchTasks();
   };
 
-  const toggleTaskStatus = (id: number) => {
-    setTasks(tasks.map(t => {
-      if (t.id === id) {
-        return { ...t, status: t.status === "Completed" ? "Pending" : "Completed" };
-      }
-      return t;
-    }));
+  const toggleTaskStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === "Completed" ? "Pending" : "Completed";
+    setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus } : t));
   };
 
   return (
