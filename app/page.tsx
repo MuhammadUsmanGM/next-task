@@ -51,11 +51,11 @@ export default function Home() {
 
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Link href="/auth" className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4 cursor-pointer">
+              <Link href="/dashboard" className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4 cursor-pointer">
                 Sign In
               </Link>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link href="/auth" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 cursor-pointer block">
+                <Link href="/dashboard" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 cursor-pointer block">
                   Get Started
                 </Link>
               </motion.div>
@@ -103,13 +103,13 @@ export default function Home() {
             className="flex flex-col sm:flex-row justify-center gap-5"
           >
             <motion.div whileHover={{ y: -5, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link href="/auth" className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 cursor-pointer">
+              <Link href="/dashboard" className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 cursor-pointer">
                 Join for Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
             <motion.div whileHover={{ y: -5, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link href="/auth" className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer">
+              <Link href="/dashboard" className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer">
                 Sign In
               </Link>
             </motion.div>
@@ -252,12 +252,12 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/auth" className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 cursor-pointer text-center block">
+                  <Link href="/dashboard" className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 cursor-pointer text-center block">
                     Get Started for Free
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/auth" className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer text-center block">
+                  <Link href="/dashboard" className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer text-center block">
                     Sign In
                   </Link>
                 </motion.div>

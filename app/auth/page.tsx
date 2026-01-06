@@ -10,12 +10,67 @@ import {
   Lock, 
   User, 
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      if (isLogin) {
+        await authClient.signIn.email({
+          email,
+          password,
+          callbackURL: "/dashboard"
+        }, {
+          onSuccess: () => router.push("/dashboard"),
+          onError: (ctx) => setError(ctx.error.message || "Login failed")
+        });
+      } else {
+        await authClient.signUp.email({
+          email,
+          password,
+          name,
+          callbackURL: "/dashboard"
+        }, {
+          onSuccess: () => router.push("/dashboard"),
+          onError: (ctx) => setError(ctx.error.message || "Signup failed")
+        });
+      }
+    } catch (err) {
+      setError("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialAuth = async (provider: "github" | "google") => {
+    setLoading(true);
+    try {
+      await authClient.signIn.social({
+        provider,
+        callbackURL: "/dashboard"
+      });
+    } catch (err) {
+      setError("Social login failed");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 flex flex-col md:flex-row relative overflow-x-hidden">
@@ -113,17 +168,21 @@ export default function AuthPage() {
 
           <div className="flex gap-4 mb-6">
             <motion.button 
+              onClick={() => handleSocialAuth("github")}
+              disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex-1 flex items-center justify-center gap-2 glass-morphism p-3 rounded-xl font-bold transition-all cursor-pointer border border-card-border shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 glass-morphism p-3 rounded-xl font-bold transition-all cursor-pointer border border-card-border shadow-sm disabled:opacity-50"
             >
               <Github className="w-5 h-5" />
               <span className="text-sm">Github</span>
             </motion.button>
             <motion.button 
+              onClick={() => handleSocialAuth("google")}
+              disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex-1 flex items-center justify-center gap-2 glass-morphism p-3 rounded-xl font-bold transition-all cursor-pointer border border-card-border shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 glass-morphism p-3 rounded-xl font-bold transition-all cursor-pointer border border-card-border shadow-sm disabled:opacity-50"
             >
               <Mail className="w-5 h-5" />
               <span className="text-sm">Google</span>
@@ -137,7 +196,19 @@ export default function AuthPage() {
             <span className="relative bg-background px-3 text-[10px] font-black uppercase tracking-widest text-text-secondary">Or</span>
           </div>
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleAuth}>
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center"
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <AnimatePresence mode="wait">
               {!isLogin && (
                 <motion.div 
@@ -150,7 +221,10 @@ export default function AuthPage() {
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-primary transition-colors" />
                     <input 
+                      required
                       type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       placeholder="John Doe"
                       className="w-full bg-accent/30 border border-card-border rounded-xl p-3 pl-11 outline-none focus:border-primary focus:bg-accent/50 transition-all text-sm font-medium"
                     />
@@ -164,7 +238,10 @@ export default function AuthPage() {
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-primary transition-colors" />
                 <input 
+                  required
                   type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@email.com"
                   className="w-full bg-accent/30 border border-card-border rounded-xl p-3 pl-11 outline-none focus:border-primary focus:bg-accent/50 transition-all text-sm font-medium"
                 />
@@ -174,12 +251,15 @@ export default function AuthPage() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Password</label>
-                {isLogin && <button className="text-[10px] font-black text-primary hover:underline transition-all">Forgot?</button>}
+                {isLogin && <button type="button" className="text-[10px] font-black text-primary hover:underline transition-all">Forgot?</button>}
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary group-focus-within:text-primary transition-colors" />
                 <input 
+                  required
                   type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-accent/30 border border-card-border rounded-xl p-3 pl-11 outline-none focus:border-primary focus:bg-accent/50 transition-all text-sm font-medium"
                 />
@@ -187,12 +267,13 @@ export default function AuthPage() {
             </div>
 
             <motion.button 
+              disabled={loading}
               whileHover={{ scale: 1.02, filter: "brightness(1.1)" }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-primary text-white p-4 rounded-xl font-black text-sm shadow-xl shadow-primary/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-primary text-white p-4 rounded-xl font-black text-sm shadow-xl shadow-primary/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
-              {isLogin ? "Log In" : "Sign Up"}
-              <ArrowRight className="w-4 h-4" />
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isLogin ? "Log In" : "Sign Up")}
+              {!loading && <ArrowRight className="w-4 h-4" />}
             </motion.button>
           </form>
 

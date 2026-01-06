@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
+import AIChatBubble from "./components/dashboard/AIChatBubble";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next Task",
-  description: "AI-powered task management with intelligent features",
+  title: {
+    template: "%s | NextTask",
+    default: "NextTask - AI-Powered Productivity",
+  },
+  description: "The next generation of task management powered by AI. Master your schedule with intelligent automation.",
   icons: {
     icon: "/logo1.png",
+    shortcut: "/logo1.png",
+    apple: "/logo1.png",
   },
 };
 
@@ -31,7 +37,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <AIChatBubble />
+        </ThemeProvider>
       </body>
     </html>
   );
