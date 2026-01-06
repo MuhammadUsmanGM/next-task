@@ -51,12 +51,12 @@ export default function Home() {
 
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <button className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4">
+              <Link href="/auth" className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4">
                 Sign In
-              </button>
-              <button className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 active:scale-95">
+              </Link>
+              <Link href="/auth" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 active:scale-95">
                 Get Started
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -100,13 +100,13 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row justify-center gap-5"
           >
-            <button className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1">
+            <Link href="/auth" className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1">
               Join for Free
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300">
+            </Link>
+            <Link href="/auth" className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300">
               Sign In
-            </button>
+            </Link>
           </motion.div>
 
           {/* Floating UI Elements */}
@@ -245,12 +245,12 @@ export default function Home() {
                 Join thousands of productive teams. Start using NextTask completely free today.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 active:scale-95">
+                <Link href="/auth" className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 active:scale-95 text-center">
                   Get Started for Free
-                </button>
-                <button className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300">
+                </Link>
+                <Link href="/auth" className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 text-center">
                   Sign In
-                </button>
+                </Link>
               </div>
               <p className="mt-8 text-sm text-text-secondary flex items-center justify-center gap-4">
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-primary" /> Always Free</span>
