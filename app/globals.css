@@ -2,25 +2,81 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0a0a;
+  --primary: #27C39A;
+  --primary-rgb: 39, 195, 154;
+  --primary-dark: #1ea380;
+  --secondary: #f8fafc;
+  --card: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --text-secondary: #64748b;
+  --accent: #f1f5f9;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-text-secondary: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-secondary: var(--secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+.dark {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #050505;
+    --foreground: #f8fafc;
+    --primary: #27C39A;
+    --primary-rgb: 39, 195, 154;
+    --primary-dark: #32d6aa;
+    --secondary: #0f172a;
+    --card: #0a0a0a;
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text-secondary: #94a3b8;
+    --accent: #111111;
+    --glass: rgba(10, 10, 10, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.05);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans);
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
 }
+
+.glass-morphism {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary) 0%, #1ea380 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-glow {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(circle, rgba(39, 195, 154, 0.15) 0%, rgba(39, 195, 154, 0) 70%);
+  z-index: -1;
+  pointer-events: none;
+}
+
