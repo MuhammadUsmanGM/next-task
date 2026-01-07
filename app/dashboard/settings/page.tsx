@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, 
   Bell, 
@@ -10,7 +10,9 @@ import {
   Globe, 
   Camera,
   Mail,
-  Lock
+  Lock,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import ThemeToggle from "../../components/ThemeToggle";
 
@@ -39,6 +41,15 @@ export default function SettingsPage() {
     }
   }, [session]);
 
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
@@ -49,10 +60,10 @@ export default function SettingsPage() {
         position,
         location,
       });
-      alert("Profile updated successfully!");
+      setToast({ message: "Profile updated successfully!", type: "success" });
     } catch (err) {
       console.error(err);
-      alert("Failed to update profile");
+      setToast({ message: "Failed to update profile", type: "error" });
     } finally {
       setSaving(false);
     }
@@ -73,7 +84,25 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className={`fixed bottom-8 right-8 z-50 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm border ${
+              toast.type === "success" 
+                ? "bg-primary text-white border-primary-dark" 
+                : "bg-red-500 text-white border-red-600"
+            }`}
+          >
+            {toast.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div>
         <h1 className="text-3xl font-black tracking-tight mb-2">Settings</h1>
         <p className="text-text-secondary font-medium">Manage your account preferences and application configuration.</p>

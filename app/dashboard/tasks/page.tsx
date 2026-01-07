@@ -11,7 +11,8 @@ import {
   Clock, 
   AlertCircle,
   Calendar,
-  Tag
+  Tag,
+  Trash
 } from "lucide-react";
 
 import CreateTaskModal from "../../components/dashboard/CreateTaskModal";
@@ -25,19 +26,18 @@ type Task = {
   dueDate: string;
 };
 
-const initialTasks: Task[] = [
-  { id: 1, title: "Design Landing Page Mockup", project: "Portfolio Project", priority: "High", status: "In Progress", dueDate: "Today" },
-  { id: 2, title: "Database Schema Implementation", project: "SaaS App", priority: "Medium", status: "Pending", dueDate: "Tomorrow" },
-  { id: 3, title: "Client Feedback Review", project: "Marketing Site", priority: "Low", status: "In Progress", dueDate: "Jan 10" },
-  { id: 4, title: "API Documentation Draft", project: "NextTask Core", priority: "High", status: "Pending", dueDate: "Jan 12" },
-  { id: 5, title: "User Interview Analysis", project: "UX Research", priority: "Medium", status: "Completed", dueDate: "Yesterday" },
-];
-
 export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = () => setActiveDropdown(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const fetchTasks = async () => {
     try {
@@ -67,6 +67,14 @@ export default function TasksPage() {
     await fetch("/api/tasks/ai-create", {
         method: "POST",
         body: JSON.stringify(newTask),
+    });
+    fetchTasks();
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    await fetch("/api/tasks", {
+        method: "DELETE",
+        body: JSON.stringify({ id }),
     });
     fetchTasks();
   };
@@ -140,7 +148,7 @@ export default function TasksPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="glass-morphism p-5 rounded-2xl border border-card-border flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-primary/30 transition-all active:scale-[0.99]"
+              className={`glass-morphism p-5 rounded-2xl border border-card-border flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-primary/30 transition-all active:scale-[0.99] ${activeDropdown === task.id ? "z-50 relative" : "relative"}`}
             >
               <div className="flex items-center gap-4">
                 <button 
@@ -186,9 +194,39 @@ export default function TasksPage() {
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{task.status}</span>
                   </div>
                 </div>
-                <button className="p-2 rounded-lg hover:bg-background transition-colors text-text-secondary cursor-pointer md:opacity-0 group-hover:opacity-100">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
+                <div className="relative">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveDropdown(activeDropdown === task.id ? null : task.id);
+                    }}
+                    className="p-2 rounded-lg hover:bg-background transition-colors text-text-secondary cursor-pointer"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                  <AnimatePresence>
+                    {activeDropdown === task.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-full mt-2 w-32 bg-background border border-card-border rounded-xl shadow-xl z-50 overflow-hidden"
+                      >
+                         <button 
+                          onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task.id);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                         >
+                            <Trash className="w-3.5 h-3.5" />
+                            Delete
+                         </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </motion.div>
           ))}

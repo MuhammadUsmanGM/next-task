@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, Tag, AlertCircle, Plus } from "lucide-react";
+import { X, Calendar, Tag, Plus, ChevronDown, ChevronLeft, ChevronRight, Check } from "lucide-react";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -15,6 +15,165 @@ interface TaskModalProps {
   }) => void;
 }
 
+const CustomSelect = ({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder,
+  icon: Icon 
+}: { 
+  options: { id: string; label: string }[]; 
+  value: string; 
+  onChange: (value: string) => void;
+  placeholder: string;
+  icon: any;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find(o => o.id === value)?.label || placeholder;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full bg-accent/30 border ${isOpen ? "border-primary" : "border-card-border"} rounded-xl p-3.5 pl-11 flex items-center justify-between outline-none transition-all font-medium text-sm text-left`}
+      >
+        <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+        <span className={value ? "text-foreground" : "text-text-secondary"}>{selectedLabel}</span>
+        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute z-50 w-full mt-2 bg-background/95 backdrop-blur-xl border border-card-border rounded-xl shadow-xl overflow-hidden custom-scrollbar max-h-48 overflow-y-auto"
+          >
+            {options.length > 0 ? (
+                options.map((option) => (
+                <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                    onChange(option.id);
+                    setIsOpen(false);
+                    }}
+                    className="w-full px-4 py-3 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors flex items-center justify-between group"
+                >
+                    <span className="font-bold">{option.label}</span>
+                    {value === option.id && <Check className="w-4 h-4 text-primary" />}
+                </button>
+                ))
+            ) : (
+                <div className="p-4 text-xs text-text-secondary text-center font-medium">No projects found</div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const CustomDatePicker = ({ value, onChange }: { value: string; onChange: (date: string) => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
+  const handlePrevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
+  const handleNextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
+
+  const handleDayClick = (day: number) => {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    onChange(date.toISOString().split('T')[0]);
+    setIsOpen(false);
+  };
+
+  const days = [];
+  for (let i = 0; i < firstDayOfMonth(currentMonth); i++) days.push(null);
+  for (let i = 1; i <= daysInMonth(currentMonth); i++) days.push(i);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full bg-accent/30 border ${isOpen ? "border-primary" : "border-card-border"} rounded-xl p-3.5 pl-11 flex items-center justify-between outline-none transition-all font-medium text-sm text-left`}
+      >
+        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+        <span className={value ? "text-foreground" : "text-text-secondary"}>
+          {value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "Select Due Date"}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            className="absolute z-50 w-[300px] mt-2 bg-background/95 backdrop-blur-xl border border-card-border rounded-xl shadow-xl p-4 right-0 md:left-0"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button type="button" onClick={handlePrevMonth} className="p-1 hover:bg-accent rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+              <span className="text-sm font-black text-center w-full">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+              <button type="button" onClick={handleNextMonth} className="p-1 hover:bg-accent rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+              {['S','M','T','W','T','F','S'].map((d, i) => <div key={i} className="text-[10px] font-bold text-text-secondary">{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {days.map((day, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={!day}
+                  onClick={() => day && handleDayClick(day)}
+                  className={`text-xs p-2 rounded-lg font-bold transition-all ${
+                    !day ? "invisible" : 
+                    (value && new Date(value).getDate() === day && new Date(value).getMonth() === currentMonth.getMonth() && new Date(value).getFullYear() === currentMonth.getFullYear()) 
+                      ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                      : "hover:bg-accent text-foreground"
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalProps) {
   const [title, setTitle] = useState("");
   const [project, setProject] = useState("General");
@@ -22,7 +181,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
   const [dueDate, setDueDate] = useState("");
   const [projectsList, setProjectsList] = useState<any[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
         fetch("/api/projects")
             .then(res => res.json())
@@ -36,10 +195,17 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title) return;
-    onSave({ title, project, priority, dueDate: dueDate || "No Date" });
+    onSave({ title, project, priority, dueDate: dueDate || new Date().toISOString() });
     setTitle("");
+    setProject("General");
+    setDueDate("");
     onClose();
   };
+
+  const projectOptions = [
+    { id: "General", label: "General" },
+    ...projectsList.map(p => ({ id: p.id, label: p.name }))
+  ];
 
   return (
     <AnimatePresence>
@@ -56,7 +222,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-lg glass-morphism rounded-3xl border border-card-border overflow-hidden bg-background shadow-2xl"
+            className="relative w-full max-w-lg glass-morphism rounded-3xl border border-card-border bg-background shadow-2xl"
           >
             <div className="p-6 border-b border-card-border flex items-center justify-between">
               <h2 className="text-xl font-black">Create New Task</h2>
@@ -84,33 +250,21 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-60 ml-1">Project</label>
-                  <div className="relative group">
-                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                    <select 
-                      value={project}
-                      onChange={(e) => setProject(e.target.value)}
-                      className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-11 outline-none focus:border-primary transition-all font-medium text-sm appearance-none"
-                    >
-                      <option value="General">General</option>
-                      {projectsList.map((p: any) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <CustomSelect 
+                    options={projectOptions}
+                    value={project}
+                    onChange={setProject}
+                    placeholder="Select Project"
+                    icon={Tag}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-60 ml-1">Due Date</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                    <input 
-                      type="text" 
-                      placeholder="e.g., Today, Jan 15"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-11 outline-none focus:border-primary transition-all font-medium text-sm"
-                    />
-                  </div>
+                  <CustomDatePicker 
+                    value={dueDate}
+                    onChange={setDueDate}
+                  />
                 </div>
               </div>
 

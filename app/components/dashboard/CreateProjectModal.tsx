@@ -50,7 +50,7 @@ export default function CreateProjectModal({ isOpen, onClose, onSave }: ProjectM
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-lg glass-morphism rounded-3xl border border-card-border overflow-hidden bg-background shadow-2xl"
+            className="relative w-full max-w-lg glass-morphism rounded-3xl border border-card-border bg-background shadow-2xl"
           >
             <div className="p-6 border-b border-card-border flex items-center justify-between">
               <h2 className="text-xl font-black">Create New Project</h2>

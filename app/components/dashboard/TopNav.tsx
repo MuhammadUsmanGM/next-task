@@ -12,7 +12,7 @@ export default function TopNav({ setSidebarOpen }: { setSidebarOpen: (open: bool
   const user = session?.user;
 
   return (
-    <header className="h-20 border-b border-card-border bg-background/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
+    <header className="h-20 border-b border-card-border bg-background/80 backdrop-blur-md sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button 
           onClick={() => setSidebarOpen(true)}
