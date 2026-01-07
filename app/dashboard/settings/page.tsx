@@ -8,7 +8,6 @@ import {
   Shield, 
   Moon, 
   Globe, 
-  CreditCard,
   Camera,
   Mail,
   Lock
@@ -63,7 +62,6 @@ export default function SettingsPage() {
     { id: "Profile", icon: User },
     { id: "Notifications", icon: Bell },
     { id: "Security", icon: Shield },
-    { id: "Plan", icon: CreditCard },
   ];
 
   if (isPending) {

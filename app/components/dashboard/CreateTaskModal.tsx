@@ -20,6 +20,18 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
   const [project, setProject] = useState("General");
   const [priority, setPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [dueDate, setDueDate] = useState("");
+  const [projectsList, setProjectsList] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+        fetch("/api/projects")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setProjectsList(data);
+            })
+            .catch(err => console.error(err));
+    }
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,10 +91,10 @@ export default function CreateTaskModal({ isOpen, onClose, onSave }: TaskModalPr
                       onChange={(e) => setProject(e.target.value)}
                       className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-11 outline-none focus:border-primary transition-all font-medium text-sm appearance-none"
                     >
-                      <option>General</option>
-                      <option>Portfolio Project</option>
-                      <option>SaaS App</option>
-                      <option>Personal</option>
+                      <option value="General">General</option>
+                      {projectsList.map((p: any) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

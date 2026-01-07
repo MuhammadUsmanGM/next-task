@@ -12,16 +12,42 @@ import {
   Plus
 } from "lucide-react";
 
-const projects = [
-  { id: 1, name: "Portfolio Project", status: "Active", progress: 75, tasks: 12, team: 3, color: "text-primary", bg: "bg-primary/10" },
-  { id: 2, name: "SaaS App Implementation", status: "Active", progress: 40, tasks: 28, team: 5, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { id: 3, name: "Marketing Campaign", status: "On Hold", progress: 15, tasks: 8, team: 2, color: "text-amber-500", bg: "bg-amber-500/10" },
-  { id: 4, name: "Core Infrastructure", status: "Active", progress: 90, tasks: 15, team: 4, color: "text-green-500", bg: "bg-green-500/10" },
-];
+import CreateProjectModal from "../../components/dashboard/CreateProjectModal";
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  const fetchProjects = () => {
+    fetch("/api/projects")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setProjects(data);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  React.useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const handleCreateProject = async (newProject: any) => {
+    await fetch("/api/projects", {
+        method: "POST",
+        body: JSON.stringify(newProject),
+    });
+    fetchProjects();
+  };
+
   return (
     <div className="space-y-8">
+      <CreateProjectModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleCreateProject}
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight mb-2">Projects</h1>
@@ -29,6 +55,7 @@ export default function ProjectsPage() {
         </div>
         <div className="flex gap-3">
           <motion.button 
+            onClick={() => setIsModalOpen(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-black text-sm shadow-xl shadow-primary/20 cursor-pointer"

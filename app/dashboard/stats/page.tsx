@@ -14,6 +14,25 @@ import {
 } from "lucide-react";
 
 export default function StatisticsPage() {
+  const [stats, setStats] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch("/api/stats")
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const metrics = stats?.metrics || { total: 0, completed: 0, efficiency: 0 };
+  const trend = stats?.trend || [];
+  const distribution = stats?.distribution || [];
+
+  const completedCount = distribution.find((d: any) => d.status === "Completed")?.count || 0;
+  const inProgressCount = distribution.find((d: any) => d.status === "In Progress")?.count || 0;
+  const pendingCount = distribution.find((d: any) => d.status === "Pending")?.count || 0;
+
   return (
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -35,20 +54,22 @@ export default function StatisticsPage() {
             <h3 className="font-black text-xl">Productivity Trend</h3>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" /><span className="text-[10px] font-bold text-text-secondary">Completed</span></div>
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-[10px] font-bold text-text-secondary">Assigned</span></div>
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-[10px] font-bold text-text-secondary">Total</span></div>
             </div>
           </div>
           <div className="flex-1 flex items-end justify-between gap-2 px-2">
-            {[40, 70, 45, 90, 65, 80, 50, 95, 75, 60, 85, 40].map((h, i) => (
+            {trend.length > 0 ? trend.map((t: any, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
                 <div className="w-full flex flex-col gap-1 items-center justify-end h-full min-h-[150px]">
-                   <motion.div initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ duration: 1, delay: i * 0.05 }} className="w-full bg-primary/20 rounded-t-lg relative group">
-                      <motion.div initial={{ height: 0 }} animate={{ height: `${h * 0.7}%` }} className="absolute bottom-0 left-0 right-0 bg-primary rounded-t-lg" />
+                   <motion.div initial={{ height: 0 }} animate={{ height: `${(t.total / (metrics.total || 1)) * 100}%` }} transition={{ duration: 1, delay: i * 0.05 }} className="w-full bg-primary/20 rounded-t-lg relative group">
+                      <motion.div initial={{ height: 0 }} animate={{ height: `${(t.completed / (t.total || 1)) * 100}%` }} className="absolute bottom-0 left-0 right-0 bg-primary rounded-t-lg" />
                    </motion.div>
                 </div>
-                <span className="text-[10px] font-black text-text-secondary opacity-50 uppercase tracking-tighter">{['J','F','M','A','M','J','J','A','S','O','N','D'][i]}</span>
+                <span className="text-[10px] font-black text-text-secondary opacity-50 uppercase tracking-tighter">{t.month}</span>
               </div>
-            ))}
+            )) : (
+              <div className="w-full h-full flex items-center justify-center text-text-secondary/50 font-bold uppercase tracking-widest text-xs">No data yet</div>
+            )}
           </div>
         </motion.div>
 
@@ -59,27 +80,27 @@ export default function StatisticsPage() {
                 <circle cx="96" cy="96" r="80" fill="none" stroke="currentColor" strokeWidth="20" className="text-accent/30" />
                 <motion.circle 
                   cx="96" cy="96" r="80" fill="none" stroke="currentColor" strokeWidth="20" strokeLinecap="round" 
-                  initial={{ strokeDasharray: "0 502" }} animate={{ strokeDasharray: "350 502" }} transition={{ duration: 1.5 }}
+                  initial={{ strokeDasharray: "0 502" }} animate={{ strokeDasharray: `${(metrics.efficiency / 100) * 502} 502` }} transition={{ duration: 1.5 }}
                   className="text-primary" 
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
-                <span className="text-4xl font-black">72%</span>
+                <span className="text-4xl font-black">{metrics.efficiency}%</span>
                 <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Efficiency</span>
               </div>
            </div>
            <div className="mt-8 space-y-3">
               <div className="flex items-center justify-between text-sm font-bold">
                  <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-primary" /><span>Completed</span></div>
-                 <span>324</span>
+                 <span>{completedCount}</span>
               </div>
               <div className="flex items-center justify-between text-sm font-bold">
                  <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500" /><span>In Progress</span></div>
-                 <span>84</span>
+                 <span>{inProgressCount}</span>
               </div>
               <div className="flex items-center justify-between text-sm font-bold">
-                 <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /><span>Overdue</span></div>
-                 <span>12</span>
+                 <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500" /><span>Pending</span></div>
+                 <span>{pendingCount}</span>
               </div>
            </div>
         </motion.div>
@@ -88,11 +109,12 @@ export default function StatisticsPage() {
       {/* Detailed Insights */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "Avg. Completion Time", value: "2.4h", trend: "-15%", icon: Clock, color: "text-blue-500" },
-          { label: "Tasks Finished", value: "32", trend: "+24%", icon: CheckCircle2, color: "text-primary" },
-          { label: "AI Suggestions", value: "148", trend: "+52%", icon: Zap, color: "text-amber-500" },
-          { label: "Deadlines Met", value: "98%", trend: "+1.2%", icon: Calendar, color: "text-green-500" }
+          { label: "Total Tasks", value: metrics.total, trend: "Overall", icon: BarChart3, color: "text-primary" },
+          { label: "Completed", value: metrics.completed, trend: `${metrics.efficiency}%`, icon: CheckCircle2, color: "text-green-500" },
+          { label: "Active", value: metrics.total - metrics.completed, trend: "In Progress", icon: Zap, color: "text-amber-500" },
+          { label: "Goal Progress", value: `${metrics.efficiency}%`, trend: "Efficiency", icon: Calendar, color: "text-blue-500" }
         ].map((stat, i) => (
+
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + (i * 0.1) }} className="glass-morphism rounded-2xl border border-card-border p-6 group">
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 bg-accent/30 rounded-xl group-hover:bg-primary/10 transition-colors">

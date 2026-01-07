@@ -10,9 +10,38 @@ import {
   MoreVertical
 } from "lucide-react";
 
+import CreateTaskModal from "../../components/dashboard/CreateTaskModal";
+
 export default function CalendarPage() {
   const [currentDate] = useState(new Date());
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchTasks = () => {
+    fetch("/api/tasks")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+            setTasks(data);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
+  };
+
+  React.useEffect(() => {
+    fetchTasks();
+  }, []);
   
+  const handleCreateTask = async (newTask: any) => {
+    await fetch("/api/tasks/ai-create", {
+        method: "POST",
+        body: JSON.stringify(newTask),
+    });
+    fetchTasks();
+  };
+
   const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
   
@@ -33,15 +62,28 @@ export default function CalendarPage() {
     days.push({ day: i, current: true });
   }
 
-  const events = [
-    { day: 7, title: "Landing Page Due", color: "bg-red-500" },
-    { day: 12, title: "Team Sync", color: "bg-primary" },
-    { day: 15, title: "Client Call", color: "bg-blue-500" },
-    { day: 22, title: "Monthly Review", color: "bg-amber-500" },
-  ];
+  const events = tasks
+    .filter(t => t.dueDate)
+    .map(t => {
+        const d = new Date(t.dueDate);
+        return {
+            day: d.getDate(),
+            month: d.getMonth(),
+            year: d.getFullYear(),
+            title: t.title,
+            color: t.priority === "High" ? "bg-red-500" : t.priority === "Medium" ? "bg-primary" : "bg-blue-500"
+        };
+    })
+    .filter(e => e.month === month && e.year === year);
+
 
   return (
     <div className="space-y-8 h-full">
+      <CreateTaskModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={handleCreateTask} 
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight mb-2">Calendar</h1>
@@ -54,6 +96,7 @@ export default function CalendarPage() {
              <button className="p-2 hover:bg-background rounded-lg transition-colors cursor-pointer"><ChevronRight className="w-5 h-5" /></button>
           </div>
           <motion.button 
+            onClick={() => setIsModalOpen(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="flex items-center justify-center gap-2 bg-primary text-white p-3 rounded-xl font-black text-sm shadow-xl shadow-primary/20 cursor-pointer"
@@ -93,7 +136,9 @@ export default function CalendarPage() {
               </div>
 
               {d.current && (
-                <button className="absolute top-3 right-3 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
+                <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="absolute top-3 right-3 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background">
                    <Plus className="w-3 h-3 text-text-secondary" />
                 </button>
               )}

@@ -22,6 +22,7 @@ export async function POST(req: Request) {
       status: "Pending",
       dueDate: dueDate && !isNaN(Date.parse(dueDate)) ? new Date(dueDate) : null,
       userId: session.user.id,
+      projectId: project && project !== "General" ? project : null,
     });
 
     return NextResponse.json({ success: true });
