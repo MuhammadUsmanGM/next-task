@@ -2,14 +2,16 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Send, X, Bot, User, Loader2, Plus, Check } from "lucide-react";
+import { Sparkles, Send, X, Bot, User, Loader2, Plus, Check, Trash2, Edit2, AlertCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
 interface Message {
   role: "user" | "ai";
   content: string;
-  isTask?: boolean;
+  isTask?: boolean;     // For Create
+  isDelete?: boolean;   // For Delete
+  isUpdate?: boolean;   // For Update
   taskData?: any;
 }
 
@@ -19,9 +21,10 @@ export default function AIChatBubble() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "ai", content: "Hey! I'm your NextTask AI. Tell me something like 'Call John tomorrow at 5pm' and I'll organize it for you." }
+    { role: "ai", content: "Hey! I'm your NextTask AI. You can ask me to create, update, or delete tasks!" }
   ]);
   const [loading, setLoading] = useState(false);
+  const [userTasks, setUserTasks] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,6 +32,25 @@ export default function AIChatBubble() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const fetchTasks = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch("/api/tasks");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setUserTasks(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch tasks for context", e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+        fetchTasks();
+    }
+  }, [isOpen, user]);
 
   const handleSend = async () => {
     if (!input.trim() || loading || !user) return;
@@ -39,22 +61,27 @@ export default function AIChatBubble() {
     setLoading(true);
 
     try {
+      // Pass tasks as context
       const res = await fetch("/api/ai/chat", {
         method: "POST",
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ message: userMsg, tasks: userTasks }),
       });
       const data = await res.json();
 
+      let newMessage: Message = { role: "ai", content: data.reply };
+
       if (data.intent === "create_task") {
-        setMessages(prev => [...prev, { 
-          role: "ai", 
-          content: data.reply, 
-          isTask: true, 
-          taskData: data.task 
-        }]);
-      } else {
-        setMessages(prev => [...prev, { role: "ai", content: data.reply }]);
+        newMessage.isTask = true;
+        newMessage.taskData = data.task;
+      } else if (data.intent === "delete_task") {
+        newMessage.isDelete = true;
+        newMessage.taskData = { id: data.taskId, title: data.taskTitle };
+      } else if (data.intent === "update_task") {
+        newMessage.isUpdate = true;
+        newMessage.taskData = { id: data.taskId, updates: data.updates };
       }
+
+      setMessages(prev => [...prev, newMessage]);
     } catch (error) {
       setMessages(prev => [...prev, { role: "ai", content: "Sorry, I ran into an error. Please try again." }]);
     } finally {
@@ -62,7 +89,7 @@ export default function AIChatBubble() {
     }
   };
 
-  const confirmTask = async (task: any) => {
+  const confirmCreateTask = async (task: any) => {
     try {
       const res = await fetch("/api/tasks/ai-create", {
         method: "POST",
@@ -72,12 +99,51 @@ export default function AIChatBubble() {
       if (res.ok) {
         setMessages(prev => [...prev, { role: "ai", content: `Great! I've added "${task.title}" to your dashboard.` }]);
         window.dispatchEvent(new CustomEvent('taskAdded'));
+        fetchTasks(); // update context
       } else {
         setMessages(prev => [...prev, { role: "ai", content: "I couldn't save that task. Please try again." }]);
       }
     } catch (error) {
       setMessages(prev => [...prev, { role: "ai", content: "Something went wrong while saving the task." }]);
     }
+  };
+
+  const confirmDeleteTask = async (task: any) => {
+     try {
+        const res = await fetch("/api/tasks", {
+            method: "DELETE",
+            body: JSON.stringify({ id: task.id }),
+        });
+
+        if (res.ok) {
+            setMessages(prev => [...prev, { role: "ai", content: `Task "${task.title}" has been deleted.` }]);
+            window.dispatchEvent(new CustomEvent('taskAdded')); // Trigger refresh
+            fetchTasks(); 
+        } else {
+            setMessages(prev => [...prev, { role: "ai", content: "Failed to delete task." }]);
+        }
+     } catch (error) {
+         setMessages(prev => [...prev, { role: "ai", content: "Error deleting task." }]);
+     }
+  };
+
+  const confirmUpdateTask = async (task: any) => {
+      try {
+        const res = await fetch("/api/tasks", {
+            method: "PATCH",
+            body: JSON.stringify({ id: task.id, ...task.updates }),
+        });
+
+        if (res.ok) {
+            setMessages(prev => [...prev, { role: "ai", content: `Task updated successfully.` }]);
+            window.dispatchEvent(new CustomEvent('taskAdded')); 
+            fetchTasks(); 
+        } else {
+            setMessages(prev => [...prev, { role: "ai", content: "Failed to update task." }]);
+        }
+      } catch (error) {
+        setMessages(prev => [...prev, { role: "ai", content: "Error updating task." }]);
+      }
   };
 
   return (
@@ -153,6 +219,7 @@ export default function AIChatBubble() {
                             {msg.content}
                           </div>
 
+                          {/* CREATE Task Card */}
                           {msg.isTask && (
                             <motion.div 
                               initial={{ opacity: 0, y: 10 }}
@@ -172,10 +239,64 @@ export default function AIChatBubble() {
                                  <Check className="w-3 h-3" /> Due: {msg.taskData.dueDate}
                               </div>
                               <button 
-                                onClick={() => confirmTask(msg.taskData)}
+                                onClick={() => confirmCreateTask(msg.taskData)}
                                 className="w-full bg-primary text-white py-2 rounded-xl text-xs font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform cursor-pointer"
                               >
                                 Confirm Task
+                              </button>
+                            </motion.div>
+                          )}
+
+                          {/* DELETE Task Card */}
+                          {msg.isDelete && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-background border border-red-500/20 p-4 rounded-2xl shadow-xl shadow-red-500/5 space-y-3"
+                            >
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                   <p className="text-[10px] font-black uppercase tracking-widest text-red-400 opacity-80 mb-1">Delete Task</p>
+                                   <p className="text-sm font-bold">{msg.taskData.title}</p>
+                                 </div>
+                                 <Trash2 className="w-4 h-4 text-red-500" />
+                              </div>
+                              <div className="text-[10px] text-text-secondary">
+                                Are you sure you want to delete this task? This action cannot be undone.
+                              </div>
+                              <button 
+                                onClick={() => confirmDeleteTask(msg.taskData)}
+                                className="w-full bg-red-500 text-white py-2 rounded-xl text-xs font-black shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-transform cursor-pointer"
+                              >
+                                Confirm Delete
+                              </button>
+                            </motion.div>
+                          )}
+
+                           {/* UPDATE Task Card */}
+                           {msg.isUpdate && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-background border border-blue-500/20 p-4 rounded-2xl shadow-xl shadow-blue-500/5 space-y-3"
+                            >
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 opacity-80 mb-1">Update Task</p>
+                                   <p className="text-sm font-bold">Applying Changes...</p>
+                                 </div>
+                                 <Edit2 className="w-4 h-4 text-blue-500" />
+                              </div>
+                              <div className="text-[10px] text-text-secondary space-y-1">
+                                {msg.taskData.updates.title && <p>• Title: {msg.taskData.updates.title}</p>}
+                                {msg.taskData.updates.status && <p>• Status: {msg.taskData.updates.status}</p>}
+                                {msg.taskData.updates.priority && <p>• Priority: {msg.taskData.updates.priority}</p>}
+                              </div>
+                              <button 
+                                onClick={() => confirmUpdateTask(msg.taskData)}
+                                className="w-full bg-blue-500 text-white py-2 rounded-xl text-xs font-black shadow-lg shadow-blue-500/20 hover:scale-[1.02] transition-transform cursor-pointer"
+                              >
+                                Confirm Changes
                               </button>
                             </motion.div>
                           )}
