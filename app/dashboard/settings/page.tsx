@@ -15,8 +15,49 @@ import {
 } from "lucide-react";
 import ThemeToggle from "../../components/ThemeToggle";
 
+import { authClient } from "@/lib/auth-client";
+import { Loader2 } from "lucide-react";
+
 export default function SettingsPage() {
+  const { data: session, isPending } = authClient.useSession();
   const [activeTab, setActiveTab] = useState("Profile");
+  const [saving, setSaving] = useState(false);
+  
+  // Profile State
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [position, setPosition] = useState("");
+  const [location, setLocation] = useState("");
+
+  React.useEffect(() => {
+    if (session?.user) {
+      setName(session.user.name || "");
+      setEmail(session.user.email || "");
+      setUsername((session.user as any).username || "");
+      setPosition((session.user as any).position || "");
+      setLocation((session.user as any).location || "");
+    }
+  }, [session]);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await authClient.updateUser({
+        name,
+        // @ts-ignore
+        username,
+        position,
+        location,
+      });
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tabs = [
     { id: "Profile", icon: User },
@@ -24,6 +65,14 @@ export default function SettingsPage() {
     { id: "Security", icon: Shield },
     { id: "Plan", icon: CreditCard },
   ];
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -64,21 +113,26 @@ export default function SettingsPage() {
                 <div className="flex flex-col md:flex-row md:items-center gap-8 border-b border-card-border pb-8">
                   <div className="relative group">
                     <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-primary/20 group-hover:border-primary/50 transition-colors">
-                      <img 
-                        src="https://api.dicebear.com/7.x/avataaars/svg?seed=Usman" 
-                        alt="Avatar" 
-                        className="w-full h-full object-cover"
-                      />
+                      {session?.user.image ? (
+                        <img 
+                          src={session.user.image} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-black text-2xl">
+                          {session?.user.name[0].toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                    <button className="absolute -bottom-2 -right-2 p-2 bg-primary text-white rounded-xl shadow-lg border-4 border-background hover:scale-110 transition-transform cursor-pointer">
-                      <Camera className="w-4 h-4" />
-                    </button>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black mb-1">Usman Mustafa</h2>
-                    <p className="text-text-secondary font-medium mb-4">Project Manager based in Doha, Qatar</p>
+                    <h2 className="text-xl font-black mb-1">{session?.user.name}</h2>
+                    <p className="text-text-secondary font-medium mb-4">
+                      {position || "Not Specified"} {location ? `based in ${location}` : ""}
+                    </p>
                     <div className="flex gap-2">
-                       <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider rounded-lg">Pro Account</span>
+                       <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider rounded-lg">Free Account</span>
                        <span className="px-3 py-1 bg-accent text-text-secondary text-[10px] font-black uppercase tracking-wider rounded-lg border border-card-border">Verified</span>
                     </div>
                   </div>
@@ -89,7 +143,8 @@ export default function SettingsPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-text-secondary opacity-60">Full Name</label>
                     <input 
                       type="text" 
-                      defaultValue="Usman Mustafa"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 outline-none focus:border-primary transition-all font-medium text-sm"
                     />
                   </div>
@@ -99,8 +154,9 @@ export default function SettingsPage() {
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
                       <input 
                         type="email" 
-                        defaultValue="usman@example.com"
-                        className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-12 outline-none focus:border-primary transition-all font-medium text-sm"
+                        value={email}
+                        disabled
+                        className="w-full bg-accent/5 cursor-not-allowed border border-card-border rounded-xl p-3.5 pl-12 outline-none font-medium text-sm opacity-60"
                       />
                     </div>
                   </div>
@@ -108,26 +164,50 @@ export default function SettingsPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-text-secondary opacity-60">Username</label>
                     <input 
                       type="text" 
-                      defaultValue="usman_mustafa"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. usman_mustafa"
                       className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 outline-none focus:border-primary transition-all font-medium text-sm"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-text-secondary opacity-60">Timezone</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-text-secondary opacity-60">Position / Role</label>
+                    <input 
+                      type="text" 
+                      value={position}
+                      onChange={(e) => setPosition(e.target.value)}
+                      placeholder="e.g. Project Manager"
+                      className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 outline-none focus:border-primary transition-all font-medium text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-text-secondary opacity-60">Location</label>
                     <div className="relative">
                       <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                      <select className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-12 outline-none focus:border-primary transition-all font-medium text-sm appearance-none">
-                        <option>GMT +03:00 (Doha)</option>
-                        <option>GMT +00:00 (London)</option>
-                        <option>GMT -05:00 (New York)</option>
-                      </select>
+                      <input 
+                        type="text" 
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        placeholder="e.g. Doha, Qatar"
+                        className="w-full bg-accent/30 border border-card-border rounded-xl p-3.5 pl-12 outline-none focus:border-primary transition-all font-medium text-sm"
+                      />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3">
-                   <button className="px-6 py-3 rounded-xl font-bold text-sm text-text-secondary hover:bg-accent transition-all cursor-pointer">Cancel</button>
-                   <button className="px-6 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 cursor-pointer">Save Changes</button>
+                   <button 
+                    onClick={() => {
+                        window.location.reload();
+                    }}
+                    className="px-6 py-3 rounded-xl font-bold text-sm text-text-secondary hover:bg-accent transition-all cursor-pointer">Cancel</button>
+                   <button 
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="px-6 py-3 rounded-xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 cursor-pointer flex items-center gap-2">
+                       {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                       {saving ? "Saving..." : "Save Changes"}
+                   </button>
                 </div>
               </div>
             )}

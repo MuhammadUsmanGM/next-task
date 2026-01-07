@@ -55,12 +55,12 @@ export default function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen:
       </button>
 
       {/* Logo */}
-      <div className="flex items-center space-x-3 mb-10 px-2 shrink-0">
-        <img src="/logo1.png" alt="Logo" className="h-8 w-auto" />
+      <Link href="/" className="flex items-center space-x-3 mb-10 px-2 shrink-0 group cursor-pointer text-foreground">
+        <img src="/logo1.png" alt="Logo" className="h-8 w-auto group-hover:scale-110 transition-transform" />
         <span className="text-xl font-black tracking-tighter">
           Next<span className="text-primary">Task</span>
         </span>
-      </div>
+      </Link>
 
       {/* Main Menu */}
       <div className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pb-4">
@@ -108,7 +108,7 @@ export default function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen:
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-black truncate">{user?.name || "Guest User"}</p>
-            <p className="text-[10px] text-text-secondary font-bold truncate">Free Plan</p>
+            <p className="text-[10px] text-text-secondary font-bold truncate">{(user as any)?.position || "Not Specified"}</p>
           </div>
         </div>
         

@@ -52,7 +52,7 @@ export default function TopNav({ setSidebarOpen }: { setSidebarOpen: (open: bool
         <Link href="/dashboard/settings" className="flex items-center space-x-3 cursor-pointer group">
           <div className="text-right hidden lg:block">
             <p className="text-sm font-black truncate max-w-[120px]">{user?.name || "User"}</p>
-            <p className="text-[10px] text-text-secondary font-bold truncate">Project Manager</p>
+            <p className="text-[10px] text-text-secondary font-bold truncate">{(user as any)?.position || "Not Specified"}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-accent overflow-hidden border border-card-border group-hover:border-primary/50 transition-colors flex items-center justify-center">
             {user?.image ? (
