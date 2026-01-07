@@ -23,9 +23,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // Suppress warnings in production builds if necessary
-  eslint: {
-    ignoreDuringBuilds: false, // Set to true if you have persistent lint issues that don't affect runtime
-  },
+
   typescript: {
     ignoreBuildErrors: false, // Set to true if you have type issues that don't affect runtime
   }
