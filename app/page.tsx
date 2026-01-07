@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -12,14 +12,20 @@ import {
   Clock, 
   BarChart3, 
   ChevronRight,
-  Menu,
-  X,
-  Play
+  Play,
+  UserCircle,
+  Github,
+  Linkedin,
+  X
 } from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
+import { authClient } from "@/lib/auth-client";
 
 export default function Home() {
   const { scrollY } = useScroll();
+  const { data: session } = authClient.useSession();
+  const [showPrivacy, setShowPrivacy] = React.useState(false);
+  const [showTerms, setShowTerms] = React.useState(false);
   const headerOpacity = useTransform(scrollY, [0, 50], [0, 1]);
   const headerBlur = useTransform(scrollY, [0, 50], [0, 8]);
 
@@ -51,14 +57,23 @@ export default function Home() {
 
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Link href="/dashboard" className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4 cursor-pointer">
-                Sign In
-              </Link>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link href="/dashboard" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 cursor-pointer block">
-                  Get Started
+              {session ? (
+                <Link href="/dashboard" className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl font-bold text-sm transition-all duration-300 cursor-pointer">
+                  <UserCircle className="w-5 h-5" />
+                  <span className="hidden sm:inline">Go to Dashboard</span>
                 </Link>
-              </motion.div>
+              ) : (
+                <>
+                  <Link href="/auth" className="hidden sm:block text-sm font-semibold hover:text-primary transition-colors px-4 cursor-pointer">
+                    Sign In
+                  </Link>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Link href="/auth" className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 cursor-pointer block">
+                      Get Started
+                    </Link>
+                  </motion.div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -103,16 +118,18 @@ export default function Home() {
             className="flex flex-col sm:flex-row justify-center gap-5"
           >
             <motion.div whileHover={{ y: -5, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link href="/dashboard" className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 cursor-pointer">
-                Join for Free
+              <Link href={session ? "/dashboard" : "/auth"} className="group flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl shadow-primary/20 hover:shadow-primary/40 cursor-pointer">
+                {session ? "Open Dashboard" : "Join for Free"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
-            <motion.div whileHover={{ y: -5, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link href="/dashboard" className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer">
-                Sign In
-              </Link>
-            </motion.div>
+            {!session && (
+              <motion.div whileHover={{ y: -5, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link href="/auth" className="flex items-center justify-center gap-2 glass-morphism px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer">
+                  Sign In
+                </Link>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Floating UI Elements */}
@@ -252,15 +269,17 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/dashboard" className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 cursor-pointer text-center block">
-                    Get Started for Free
+                  <Link href={session ? "/dashboard" : "/auth"} className="bg-primary hover:bg-primary-dark text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 transition-all duration-300 cursor-pointer text-center block">
+                    {session ? "Open Dashboard" : "Get Started for Free"}
                   </Link>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/dashboard" className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer text-center block">
-                    Sign In
-                  </Link>
-                </motion.div>
+                {!session && (
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Link href="/auth" className="glass-morphism px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-all duration-300 cursor-pointer text-center block">
+                      Sign In
+                    </Link>
+                  </motion.div>
+                )}
               </div>
               <p className="mt-8 text-sm text-text-secondary flex items-center justify-center gap-4">
                 <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-primary" /> Always Free</span>
@@ -297,15 +316,19 @@ export default function Home() {
               <ul className="space-y-4 text-text-secondary">
                 <li className="hover:text-primary transition-colors cursor-pointer">About</li>
                 <li className="hover:text-primary transition-colors cursor-pointer">Careers</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Blog</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-6">Support</h4>
+              <h4 className="font-bold mb-6">Social</h4>
               <ul className="space-y-4 text-text-secondary">
-                <li className="hover:text-primary transition-colors cursor-pointer">Help Center</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Contact</li>
-                <li className="hover:text-primary transition-colors cursor-pointer">Twitter</li>
+                <li className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer">
+                  <Linkedin className="w-4 h-4" />
+                  <a href="https://www.linkedin.com/in/muhammad-usman-ai-dev" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </li>
+                <li className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer">
+                  <Github className="w-4 h-4" />
+                  <a href="https://github.com/MuhammadUsmanGM" target="_blank" rel="noopener noreferrer">GitHub</a>
+                </li>
               </ul>
             </div>
           </div>
@@ -313,13 +336,71 @@ export default function Home() {
             <p className="text-text-secondary text-sm">
               © {new Date().getFullYear()} NextTask. All rights reserved. Built with ❤️ for productive minds.
             </p>
-            <div className="flex gap-8 text-sm text-text-secondary">
-              <span className="hover:text-primary cursor-pointer">Privacy Policy</span>
-              <span className="hover:text-primary cursor-pointer">Terms of Service</span>
+            <div className="flex gap-8 text-sm text-text-secondary font-bold">
+              <span onClick={() => setShowPrivacy(true)} className="hover:text-primary cursor-pointer underline-offset-4 hover:underline">Privacy Policy</span>
+              <span onClick={() => setShowTerms(true)} className="hover:text-primary cursor-pointer underline-offset-4 hover:underline">Terms of Service</span>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Modals */}
+      <AnimatePresence>
+        {(showPrivacy || showTerms) && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { setShowPrivacy(false); setShowTerms(false); }}
+              className="absolute inset-0 bg-background/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl max-h-[80vh] overflow-y-auto glass-morphism rounded-[2rem] border border-card-border p-8 md:p-12 shadow-2xl custom-scrollbar"
+            >
+              <div className="flex justify-between items-start mb-8">
+                <h2 className="text-3xl font-black">{showPrivacy ? "Privacy Policy" : "Terms of Service"}</h2>
+                <button 
+                  onClick={() => { setShowPrivacy(false); setShowTerms(false); }}
+                  className="p-2 hover:bg-accent rounded-xl transition-colors cursor-pointer"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6 text-text-secondary leading-relaxed font-medium">
+                {showPrivacy ? (
+                  <>
+                    <p>At NextTask, we take your privacy seriously. This policy describes how we collect, use, and handle your data when you use our services.</p>
+                    <h3 className="text-foreground font-bold text-lg">1. Data Collection</h3>
+                    <p>We collect information you provide directly, such as when you create an account, create tasks, or communicate with us.</p>
+                    <h3 className="text-foreground font-bold text-lg">2. Data Usage</h3>
+                    <p>We use your data to provide, maintain, and improve our services, including personalization and AI-powered task organization.</p>
+                    <h3 className="text-foreground font-bold text-lg">3. Data Sharing</h3>
+                    <p>We do not sell your personal data. We only share data with service providers necessary for our operations (e.g., database hosting, AI processing).</p>
+                  </>
+                ) : (
+                  <>
+                    <p>Welcome to NextTask. By using our platform, you agree to these terms. Please read them carefully.</p>
+                    <h3 className="text-foreground font-bold text-lg">1. Account Responsibility</h3>
+                    <p>You are responsible for maintaining the security of your account and any activities that occur under your credentials.</p>
+                    <h3 className="text-foreground font-bold text-lg">2. Acceptable Use</h3>
+                    <p>You agree not to use NextTask for any illegal activities or to distribute harmful content.</p>
+                    <h3 className="text-foreground font-bold text-lg">3. Service Updates</h3>
+                    <p>We reserve the right to modify or discontinue features of the service at any time to improve the user experience.</p>
+                  </>
+                )}
+                <div className="pt-8 border-t border-card-border text-xs opacity-50 font-bold">
+                  Last Updated: {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
